@@ -232,19 +232,7 @@ namespace Projeto4
         /// <returns>Uma lista das cidades percorridas</returns>
         private Cidade[] ProcurarCaminhoBacktracking(Cidade origem, Cidade destino)
         {
-            List<Cidade> percorridos = new List<Cidade>();
-            Stack<Cidade> pilha = new Stack<Cidade>(grafo.Vertices.Length);
-            pilha.Push(origem);
-
-            Cidade atual = origem;
-
-            while (pilha.Count > 0)
-            {
-                Aresta<Cidade>[] saidas = grafo.Saidas(atual);
-
-            }
-
-            return pilha.ToArray();
+            
         }
 
         /// <summary>
