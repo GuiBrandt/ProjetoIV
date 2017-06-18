@@ -109,7 +109,7 @@ namespace Projeto4
             List<Cidade> vertices = new List<Cidade>(grafo.Vertices);
 
             PointF centro = new PointF(g.ClipBounds.Width / 2, g.ClipBounds.Height / 2);
-            double raio = Math.Min(g.ClipBounds.Width / 2, g.ClipBounds.Height / 2) - 10;
+            double raio = Math.Min(g.ClipBounds.Width / 2, g.ClipBounds.Height / 2) - 32;
 
             List<PointF> posicoes = new List<PointF>();
 
@@ -137,16 +137,33 @@ namespace Projeto4
                 TextRenderer.DrawText(g, vertices[i].ToString(), Font, Point.Round(pos), Color.Black, Color.White);
             }
 
-            // Desenha as ligações entre os vértices
             foreach (Aresta<Cidade> aresta in grafo.Arestas)
             {
                 PointF pA = posicoes[vertices.IndexOf(aresta.Origem)],
                        pB = posicoes[vertices.IndexOf(aresta.Destino)];
 
-                Color cor = caminho.Contains(aresta) ? Color.Green : Color.Red;
+                // Desenha a seta
+                using (Pen p = new Pen(Color.LightGray, (float)Math.Sqrt(aresta.Valor) + (caminho.Contains(aresta) ? 1 : 0)))
+                {
+                    p.StartCap = LineCap.Round;
+                    p.CustomEndCap = new AdjustableArrowCap(4 + p.Width / 2, 4 + p.Width / 2);
+                    g.DrawLine(p, pA, pB);
+                }
+
+                // Escreve o peso
+                SizeF sz = TextRenderer.MeasureText(aresta.Valor.ToString(), Font);
+                PointF meio = new PointF((pA.X + pB.X - sz.Width) / 2, (pA.Y + pB.Y - sz.Height) / 2);
+                TextRenderer.DrawText(g, aresta.Valor.ToString(), Font, Point.Round(meio), Color.Black, Color.White);
+            }
+
+            // Desenha as ligações entre os vértices
+            foreach (Aresta<Cidade> aresta in caminho)
+            {
+                PointF pA = posicoes[vertices.IndexOf(aresta.Origem)],
+                       pB = posicoes[vertices.IndexOf(aresta.Destino)];
 
                 // Desenha a seta
-                using (Pen p = new Pen(cor, (float)Math.Sqrt(aresta.Valor) + (caminho.Contains(aresta) ? 1 : 0)))
+                using (Pen p = new Pen(Color.Red, (float)Math.Sqrt(aresta.Valor) + (caminho.Contains(aresta) ? 1 : 0)))
                 {
                     p.StartCap = LineCap.Round;
                     p.CustomEndCap = new AdjustableArrowCap(4 + p.Width / 2, 4 + p.Width / 2);
@@ -232,7 +249,7 @@ namespace Projeto4
         /// <returns>Uma lista das cidades percorridas</returns>
         private Cidade[] ProcurarCaminhoBacktracking(Cidade origem, Cidade destino)
         {
-            
+            throw new NotImplementedException();
         }
 
         /// <summary>

@@ -93,7 +93,7 @@
             this.lbCaminhos.FormattingEnabled = true;
             this.lbCaminhos.Location = new System.Drawing.Point(10, 83);
             this.lbCaminhos.Name = "lbCaminhos";
-            this.lbCaminhos.Size = new System.Drawing.Size(182, 459);
+            this.lbCaminhos.Size = new System.Drawing.Size(182, 472);
             this.lbCaminhos.TabIndex = 7;
             this.lbCaminhos.SelectedIndexChanged += new System.EventHandler(this.lbCaminhos_SelectedIndexChanged);
             // 
