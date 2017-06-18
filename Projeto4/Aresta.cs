@@ -70,5 +70,29 @@ namespace Projeto4
 
             Valor = reader.ReadInt32();
         }
+
+        /// <summary>
+        /// Verifica igualdade entre duas arestas
+        /// </summary>
+        /// <param name="other">Aresta com a qual comparar</param>
+        /// <returns>Verdadeiro se forem iguais, falso se não</returns>
+        public override bool Equals(object other)
+        {
+            if (other == null || other.GetType() != typeof(Aresta<Tipo>))
+                return false;
+
+            Aresta<Tipo> a = (Aresta<Tipo>)other;
+
+            return Origem.Equals(a.Origem) && Destino.Equals(a.Destino) && Valor == a.Valor;
+        }
+
+        /// <summary>
+        /// Converte a aresta em string
+        /// </summary>
+        /// <returns>Uma string representando a aresta</returns>
+        public override string ToString()
+        {
+            return string.Format("{0} -> {1} ({2})", Origem, Destino, Valor);
+        }
     }
 }

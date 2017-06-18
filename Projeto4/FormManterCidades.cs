@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -175,7 +176,9 @@ namespace Projeto4
         /// </summary>
         private void btnRemover_Click(object sender, EventArgs e)
         {
-            cidades.Remover((Cidade)cbCidadeRemover.SelectedItem);
+            Cidade cidade = (Cidade)cbCidadeRemover.SelectedItem;
+            cidades.Remover(cidade);
+            arestas.RemoveAll((Aresta<Cidade> a) => a.Origem.Equals(cidade) || a.Destino.Equals(cidade));
             Atualizar();
         }
 
@@ -283,6 +286,7 @@ namespace Projeto4
         /// </summary>
         private void canvasArvore_Paint(object sender, PaintEventArgs e)
         {
+            e.Graphics.SmoothingMode = SmoothingMode.HighQuality;
             DesenharArvore(new PointF(canvasArvore.Width / 2, 10), cidades.Raiz, e.Graphics);
         }
 
