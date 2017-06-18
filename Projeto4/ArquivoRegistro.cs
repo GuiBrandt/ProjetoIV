@@ -7,7 +7,7 @@ namespace Projeto4
     /// <summary>
     /// Classe para manutenção do arquivo de cidades
     /// </summary>
-    class ArquivoCidades : IDisposable
+    class ArquivoRegistro<Tipo> : IDisposable where Tipo : IRegistro, new()
     {
         FileStream _stream;
 
@@ -16,7 +16,7 @@ namespace Projeto4
         /// </summary>
         /// <param name="filename">Nome do arquivo</param>
         /// /// <param name="mode">Modo de abertura do arquivo</param>
-        public ArquivoCidades(string filename, FileMode mode)
+        public ArquivoRegistro(string filename, FileMode mode)
         {
             _stream = File.Open(filename, mode, FileAccess.ReadWrite);
         }
@@ -24,24 +24,28 @@ namespace Projeto4
         /// <summary>
         /// Escreve uma cidade no arquivo
         /// </summary>
-        /// <param name="cidade">Cidade a ser escrita</param>
-        public void Escrever(Cidade cidade)
+        /// <param name="registro">Registro a ser escrito</param>
+        public void Escrever(Tipo registro)
         {
             using (BinaryWriter writer = new BinaryWriter(_stream, Encoding.Default, true))
-                writer.Write(cidade.Nome);
+                registro.Escrever(writer);
         }
 
         /// <summary>
         /// Lê uma cidade do arquivo
         /// </summary>
-        public Cidade LerUm()
+        public Tipo LerUm()
         {
             // Se estiver no fim do arquivo, retorna nulo
             if (_stream.Position == _stream.Length)
-                return null;
+                return default(Tipo);
 
+
+            Tipo resultado = new Tipo();
             using (BinaryReader reader = new BinaryReader(_stream, Encoding.Default, true))
-                return new Cidade(reader.ReadString());
+                resultado.Ler(reader);
+
+            return resultado;
         }
 
         /// <summary>

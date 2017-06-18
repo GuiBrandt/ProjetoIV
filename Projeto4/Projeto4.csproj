@@ -46,8 +46,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ArquivoArestas.cs" />
-    <Compile Include="ArquivoCidades.cs" />
+    <Compile Include="Aresta.cs" />
+    <Compile Include="ArquivoRegistro.cs" />
     <Compile Include="ArvoreBinaria.cs" />
     <Compile Include="Cidade.cs" />
     <Compile Include="FormManterCidades.cs">
@@ -63,6 +63,7 @@
       <DependentUpon>FormPrincipal.cs</DependentUpon>
     </Compile>
     <Compile Include="Grafo.cs" />
+    <Compile Include="IRegistro.cs" />
     <Compile Include="NoArvore.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

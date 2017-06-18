@@ -24,17 +24,17 @@ namespace Projeto4
         /// <summary>
         /// Ângulo (em graus) entre nós da árvore
         /// </summary>
-        const float TREE_ANGLE_DEGREES = 60;
+        const float TREE_ANGLE_DEGREES = 75;
 
         /// <summary>
         /// Tamanho das arestas da árvore
         /// </summary>
-        const float TREE_EDGE_LENGTH = 56;
+        const float TREE_EDGE_LENGTH = 64;
 
         /// <summary>
         /// Variação do tamanho das arestas da árvore
         /// </summary>
-        const float TREE_EDGE_VARIATION = 2;
+        const float TREE_EDGE_VARIATION = 6;
 
         /// <summary>
         /// Árvore de cidades
@@ -44,7 +44,7 @@ namespace Projeto4
         /// <summary>
         /// Lista de arestas
         /// </summary>
-        List<Aresta> arestas;
+        List<Aresta<Cidade>> arestas;
 
         /// <summary>
         /// Construtor
@@ -68,7 +68,7 @@ namespace Projeto4
 
             List<Cidade> vetor = new List<Cidade>();
 
-            using (ArquivoCidades arq = new ArquivoCidades("cidades.dat", FileMode.OpenOrCreate))
+            using (var arq = new ArquivoRegistro<Cidade>("cidades.dat", FileMode.OpenOrCreate))
             {
                 Cidade cidade;
                 while ((cidade = arq.LerUm()) != null)
@@ -101,11 +101,11 @@ namespace Projeto4
         /// </summary>
         private void LerArestas()
         {
-            arestas = new List<Aresta>();
+            arestas = new List<Aresta<Cidade>>();
 
-            using (ArquivoArestas arq = new ArquivoArestas("arestas.dat", FileMode.OpenOrCreate))
+            using (var arq = new ArquivoRegistro<Aresta<Cidade>>("arestas.dat", FileMode.OpenOrCreate))
             {
-                Aresta aresta;
+                Aresta<Cidade> aresta;
                 while ((aresta = arq.LerUm()) != null)
                     arestas.Add(aresta);
             }
@@ -190,11 +190,11 @@ namespace Projeto4
                 return;
             }
 
-            Aresta nova = new Aresta(cbOrigem.SelectedIndex, cbDestino.SelectedIndex, (int)numPeso.Value);
+            Aresta<Cidade> nova = new Aresta<Cidade>((Cidade)cbOrigem.SelectedItem, (Cidade)cbDestino.SelectedItem, (int)numPeso.Value);
 
             // Procura por uma aresta que tenha a mesma origem e destino
-            Aresta existente = arestas.Find(
-                (Aresta a) => a.IndiceDestino == nova.IndiceDestino && a.IndiceOrigem == nova.IndiceOrigem  // Ai
+            Aresta<Cidade> existente = arestas.Find(
+                (Aresta<Cidade> a) => a.Destino.Equals(nova.Destino) && a.Origem.Equals(nova.Origem)  // Ai
             );
 
             // Se existir, sugere mudar o peso dela
@@ -300,8 +300,8 @@ namespace Projeto4
         /// </summary>
         private void SalvarArestas()
         {
-            using (ArquivoArestas arq = new ArquivoArestas("arestas.dat", FileMode.Create))
-                foreach (Aresta aresta in arestas)
+            using (var arq = new ArquivoRegistro<Aresta<Cidade>>("arestas.dat", FileMode.Create))
+                foreach (Aresta<Cidade> aresta in arestas)
                     arq.Escrever(aresta);
         }
 
@@ -310,7 +310,7 @@ namespace Projeto4
         /// </summary>
         private void SalvarCidades()
         {
-            using (ArquivoCidades arq = new ArquivoCidades("cidades.dat", FileMode.Create))
+            using (ArquivoRegistro<Cidade> arq = new ArquivoRegistro<Cidade>("cidades.dat", FileMode.Create))
                 cidades.PercorrerEmOrdem((Cidade cid) => arq.Escrever(cid));    // :/
         }
 

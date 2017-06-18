@@ -228,7 +228,7 @@
             this.canvasArvore.BackColor = System.Drawing.Color.White;
             this.canvasArvore.Location = new System.Drawing.Point(364, 12);
             this.canvasArvore.Name = "canvasArvore";
-            this.canvasArvore.Size = new System.Drawing.Size(428, 266);
+            this.canvasArvore.Size = new System.Drawing.Size(359, 266);
             this.canvasArvore.TabIndex = 5;
             this.canvasArvore.TabStop = false;
             this.canvasArvore.Paint += new System.Windows.Forms.PaintEventHandler(this.canvasArvore_Paint);
@@ -238,7 +238,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(804, 288);
+            this.ClientSize = new System.Drawing.Size(730, 288);
             this.Controls.Add(this.canvasArvore);
             this.Controls.Add(this.gbLigacoes);
             this.Controls.Add(this.gbRemover);
