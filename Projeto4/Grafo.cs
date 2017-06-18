@@ -9,6 +9,9 @@ namespace Projeto4
     /// <typeparam name="Tipo">Tipo do vértice do grafo</typeparam>
     class Grafo<Tipo> where Tipo : IComparable<Tipo>, IRegistro, new()
     {
+        /// <summary>
+        /// Lista de vértices
+        /// </summary>
         private List<Tipo> _vertices;
 
         /// <summary>
@@ -22,6 +25,9 @@ namespace Projeto4
             }
         }
 
+        /// <summary>
+        /// Lista de arestas
+        /// </summary>
         public List<Aresta<Tipo>> _arestas;
 
         /// <summary>
@@ -91,9 +97,29 @@ namespace Projeto4
         /// </summary>
         /// <param name="origem">Vértice de origem</param>
         /// <param name="destino">Vértice de destino</param>
-        public Aresta<Tipo> ArestaEntre(int origem, int destino)
+        public Aresta<Tipo> ArestaEntre(Tipo origem, Tipo destino)
         {
             return _arestas.Find((Aresta<Tipo> a) => a.Origem.Equals(origem) && a.Destino.Equals(destino));
+        }
+
+        /// <summary>
+        /// Obtém todas as arestas de entrada para um vértice
+        /// </summary>
+        /// <param name="vertice">Vértice</param>
+        /// <returns>Um array de arestas cujo destino é o vértice dado</returns>
+        public Aresta<Tipo>[] Entradas(Tipo vertice)
+        {
+            return _arestas.FindAll((Aresta<Tipo> a) => a.Destino.Equals(vertice)).ToArray();
+        }
+
+        /// <summary>
+        /// Obtém todas as arestas de saida de um vértice
+        /// </summary>
+        /// <param name="vertice">Vértice</param>
+        /// <returns>Um array de arestas cuja origem é o vértice dado</returns>
+        public Aresta<Tipo>[] Saidas(Tipo vertice)
+        {
+            return _arestas.FindAll((Aresta<Tipo> a) => a.Origem.Equals(vertice)).ToArray();
         }
     }
 }
