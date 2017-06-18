@@ -28,20 +28,29 @@ namespace Projeto4
         public void Adicionar(NoArvore<Tipo> no)
         {
             if (Raiz == null)
+            {
                 Raiz = no;
+                return;
+            }
 
             NoArvore<Tipo> anterior = Raiz, atual = null;
 
             do
             {
-                if (anterior.Info.CompareTo(no.Info) < 0)
+                if (no.Info.CompareTo(anterior.Info) < 0)
                     atual = anterior.Esquerda;
                 else
                     atual = anterior.Direita;
 
-                anterior = atual;
+                if (atual != null)
+                    anterior = atual;
             }
             while (atual != null);
+
+            if (no.Info.CompareTo(anterior.Info) < 0)
+                anterior.Esquerda = no;
+            else
+                anterior.Direita = no;
         }
 
         /// <summary>
@@ -105,6 +114,9 @@ namespace Projeto4
         /// <returns>Retorna o menor nó na árvore com a raíz passado</returns>
         private NoArvore<Tipo> Menor(NoArvore<Tipo> raiz)
         {
+            if (raiz.Esquerda == null)
+                return raiz;
+
             NoArvore<Tipo> atual;
             for (atual = raiz.Esquerda; atual.Esquerda != null; atual = atual.Esquerda);
 
@@ -120,7 +132,7 @@ namespace Projeto4
             NoArvore<Tipo> atual = Raiz;
             while (atual != null && atual.Info.CompareTo(valor) != 0)
             {
-                if (atual.Info.CompareTo(valor) < 0)
+                if (valor.CompareTo(atual.Info) < 0)
                     atual = atual.Esquerda;
                 else
                     atual = atual.Direita;
@@ -136,6 +148,9 @@ namespace Projeto4
         /// <param name="callback">Função a ser chamada para cada elemento percorrido</param>
         private void PercorrerPreOrdem(NoArvore<Tipo> raiz, Action<Tipo> callback)
         {
+            if (raiz == null)
+                return;
+
             callback(raiz.Info);
             PercorrerPreOrdem(raiz.Esquerda, callback);
             PercorrerPreOrdem(raiz.Direita, callback);
@@ -157,6 +172,9 @@ namespace Projeto4
         /// <param name="callback">Função a ser chamada para cada elemento percorrido</param>
         private void PercorrerPosOrdem(NoArvore<Tipo> raiz, Action<Tipo> callback)
         {
+            if (raiz == null)
+                return;
+
             PercorrerPosOrdem(raiz.Esquerda, callback);
             PercorrerPosOrdem(raiz.Direita, callback);
             callback(raiz.Info);
@@ -178,6 +196,9 @@ namespace Projeto4
         /// <param name="callback">Função a ser chamada para cada elemento percorrido</param>
         private void PercorrerEmOrdem(NoArvore<Tipo> raiz, Action<Tipo> callback)
         {
+            if (raiz == null)
+                return;
+
             PercorrerEmOrdem(raiz.Esquerda, callback);
             callback(raiz.Info);
             PercorrerEmOrdem(raiz.Direita, callback);

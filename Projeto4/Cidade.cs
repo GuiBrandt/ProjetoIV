@@ -30,5 +30,14 @@ namespace Projeto4
         {
             return Nome.CompareTo(other.Nome);
         }
+
+        /// <summary>
+        /// Converte a cidade em string
+        /// </summary>
+        /// <returns>O nome da cidade</returns>
+        public override string ToString()
+        {
+            return Nome;
+        }
     }
 }

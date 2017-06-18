@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,6 +16,26 @@ namespace Projeto4
     /// </summary>
     public partial class FormManterCidades : Form
     {
+        /// <summary>
+        /// Raio dos nós da árvore
+        /// </summary>
+        const float TREE_NODE_RADIUS = 12;
+
+        /// <summary>
+        /// Ângulo (em graus) entre nós da árvore
+        /// </summary>
+        const float TREE_ANGLE_DEGREES = 60;
+
+        /// <summary>
+        /// Tamanho das arestas da árvore
+        /// </summary>
+        const float TREE_EDGE_LENGTH = 56;
+
+        /// <summary>
+        /// Variação do tamanho das arestas da árvore
+        /// </summary>
+        const float TREE_EDGE_VARIATION = 2;
+
         /// <summary>
         /// Árvore de cidades
         /// </summary>
@@ -45,12 +66,34 @@ namespace Projeto4
         {
             cidades = new ArvoreBinaria<Cidade>();
 
-            using (ArquivoCidades arq = new ArquivoCidades("cidades.dat"))
+            List<Cidade> vetor = new List<Cidade>();
+
+            using (ArquivoCidades arq = new ArquivoCidades("cidades.dat", FileMode.OpenOrCreate))
             {
                 Cidade cidade;
                 while ((cidade = arq.LerUm()) != null)
-                    cidades.Adicionar(cidade);
+                    vetor.Add(cidade);
             }
+
+            Particionar(ref vetor, 0, vetor.Count - 1);
+        }
+
+        /// <summary>
+        /// Particiona um vetor de cidades e monta a árvore
+        /// </summary>
+        /// <param name="vetor">Vetor de cidades</param>
+        /// <param name="inicio">Posição inicial</param>
+        /// <param name="fim">Posição final</param>
+        private void Particionar(ref List<Cidade> vetor, int inicio, int fim)
+        {
+            if (inicio > fim)
+                return;
+
+            int meio = (inicio + fim) / 2;
+            cidades.Adicionar(vetor[meio]);
+
+            Particionar(ref vetor, inicio, meio - 1);
+            Particionar(ref vetor, meio + 1, fim);
         }
 
         /// <summary>
@@ -60,7 +103,7 @@ namespace Projeto4
         {
             arestas = new List<Aresta>();
 
-            using (ArquivoArestas arq = new ArquivoArestas("arestas.dat"))
+            using (ArquivoArestas arq = new ArquivoArestas("arestas.dat", FileMode.OpenOrCreate))
             {
                 Aresta aresta;
                 while ((aresta = arq.LerUm()) != null)
@@ -83,8 +126,20 @@ namespace Projeto4
             {
                 cidades.Adicionar(cidade);
 
-                AtualizarComboBoxes();
+                Atualizar();
             }
+        }
+
+        /// <summary>
+        /// Atualiza as informações do formulário
+        /// </summary>
+        private void Atualizar()
+        {
+            SalvarCidades();
+            LerCidades();
+
+            AtualizarComboBoxes();
+            canvasArvore.Invalidate();
         }
 
         /// <summary>
@@ -97,11 +152,174 @@ namespace Projeto4
             cbDestino.Items.Clear();
 
             List<Cidade> listaCidades = new List<Cidade>();
-            cidades.PercorrerEmOrdem((Cidade cidade) => listaCidades.Add(cidade));                
+            cidades.PercorrerEmOrdem((Cidade cidade) => listaCidades.Add(cidade));  // Foi mal
+
+            if (listaCidades.Count == 0)
+            {
+                gbRemover.Enabled = gbLigacoes.Enabled = false;
+
+                return;
+            }
+
+            gbRemover.Enabled = gbLigacoes.Enabled = true;
 
             cbCidadeRemover.Items.AddRange(listaCidades.ToArray());
             cbOrigem.Items.AddRange(listaCidades.ToArray());
             cbDestino.Items.AddRange(listaCidades.ToArray());
+
+            cbCidadeRemover.SelectedIndex = cbOrigem.SelectedIndex = cbDestino.SelectedIndex = 0;
+        }
+
+        /// <summary>
+        /// Botão de remover cidade
+        /// </summary>
+        private void btnRemover_Click(object sender, EventArgs e)
+        {
+            cidades.Remover((Cidade)cbCidadeRemover.SelectedItem);
+            Atualizar();
+        }
+
+        /// <summary>
+        /// Cria uma aresta entre duas cidades
+        /// </summary>
+        private void btnCriar_Click(object sender, EventArgs e)
+        {
+            if (cbOrigem.SelectedItem == cbDestino.SelectedItem)
+            {
+                MessageBox.Show(this, "Não pode criar aresta de uma cidade para ela mesma", Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            Aresta nova = new Aresta(cbOrigem.SelectedIndex, cbDestino.SelectedIndex, (int)numPeso.Value);
+
+            // Procura por uma aresta que tenha a mesma origem e destino
+            Aresta existente = arestas.Find(
+                (Aresta a) => a.IndiceDestino == nova.IndiceDestino && a.IndiceOrigem == nova.IndiceOrigem  // Ai
+            );
+
+            // Se existir, sugere mudar o peso dela
+            if (existente != null)
+            {
+                DialogResult r = MessageBox.Show(this, "Já existe uma aresta ligando estas cidade. Deseja mudar seu peso?", Text, MessageBoxButtons.YesNo);
+
+                if (r == DialogResult.Yes)
+                    arestas[arestas.IndexOf(existente)] = nova;
+
+                return;
+            }
+
+            // Se não, cria a aresta
+            arestas.Add(nova);
+        }
+
+        /// <summary>
+        /// Desenha uma árvore binária recursivamente
+        /// </summary>
+        /// <param name="origin">Origem do desenho</param>
+        /// <param name="raiz">Raíz da árvore a ser desenhada</param>
+        /// <param name="g">Instância de Graphics para desenho</param>
+        /// <param name="nivel">Nível da árvore sendo desenhado</param>
+        private void DesenharArvore(PointF origin, NoArvore<Cidade> raiz, Graphics g, int nivel = 0)
+        {
+            if (raiz == null)
+                return;
+
+            // Cálculo do ângulo de abertura da árvore em radianos
+            double rad = (TREE_ANGLE_DEGREES / Math.Pow(2, nivel)) * Math.PI / 180;
+
+            float len = TREE_EDGE_LENGTH - TREE_EDGE_VARIATION * nivel;
+
+            // Calcula a posição para os nós esquerdo e direito
+            PointF left = new PointF(
+                origin.X + (float)(Math.Cos(Math.PI / 2 + rad) * len),
+                origin.Y + (float)(Math.Sin(Math.PI / 2 + rad) * len)
+            );
+
+            PointF right = new PointF(
+                origin.X + (float)(Math.Cos(Math.PI / 2 - rad) * len),
+                origin.Y + (float)(Math.Sin(Math.PI / 2 - rad) * len)
+            );
+
+            // Desenha as linhas para os nós filhos
+            using (Pen outline = new Pen(Color.White, 5))
+            {
+                if (raiz.Esquerda != null)
+                {
+                    g.DrawLine(outline, origin, left);
+                    g.DrawLine(Pens.Red, origin, left);
+                }
+
+                if (raiz.Direita != null)
+                {
+                    g.DrawLine(outline, origin, right);
+                    g.DrawLine(Pens.Red, origin, right);
+                }
+            }
+
+            // Desenha o círculo para a raíz
+            float r = TREE_NODE_RADIUS;
+            RectangleF rect = new RectangleF(origin.X - r / 2, origin.Y - r / 2, r, r);
+            g.FillEllipse(Brushes.Blue, rect);
+
+            using (Pen p = new Pen(Color.White, 2))
+                g.DrawEllipse(p, rect);
+
+            // Desenha o nome da cidade
+            TextRenderer.DrawText(
+                g,
+                raiz.Info.ToString(),
+                Font,
+                new Point((int)origin.X, (int)origin.Y),
+                Color.Black, Color.White
+            );
+
+            // Chama o procedimento para os nós filhos
+            DesenharArvore(left, raiz.Esquerda, g, nivel + 1);
+            DesenharArvore(right, raiz.Direita, g, nivel + 1);            
+        }
+
+        /// <summary>
+        /// Desenho do canvas da árvore
+        /// </summary>
+        private void canvasArvore_Paint(object sender, PaintEventArgs e)
+        {
+            DesenharArvore(new PointF(canvasArvore.Width / 2, 10), cidades.Raiz, e.Graphics);
+        }
+
+        /// <summary>
+        /// Fechamento do form. Salva os arquivos.
+        /// </summary>
+        private void FormManterCidades_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            SalvarCidades();
+            SalvarArestas();
+        }
+
+        /// <summary>
+        /// Salva as arestas no arquivo de arestas
+        /// </summary>
+        private void SalvarArestas()
+        {
+            using (ArquivoArestas arq = new ArquivoArestas("arestas.dat", FileMode.Create))
+                foreach (Aresta aresta in arestas)
+                    arq.Escrever(aresta);
+        }
+
+        /// <summary>
+        /// Salva as cidades no arquivo de cidades
+        /// </summary>
+        private void SalvarCidades()
+        {
+            using (ArquivoCidades arq = new ArquivoCidades("cidades.dat", FileMode.Create))
+                cidades.PercorrerEmOrdem((Cidade cid) => arq.Escrever(cid));    // :/
+        }
+
+        /// <summary>
+        /// Redesenha a árvore
+        /// </summary>
+        private void canvasArvore_MouseMove(object sender, MouseEventArgs e)
+        {
+            canvasArvore.Invalidate();
         }
     }
 }

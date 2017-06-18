@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
 namespace Projeto4
 {
@@ -14,9 +15,10 @@ namespace Projeto4
         /// Construtor
         /// </summary>
         /// <param name="filename">Nome do arquivo</param>
-        public ArquivoArestas(string filename)
+        /// <param name="mode">Modo de abertura do arquivo</param>
+        public ArquivoArestas(string filename, FileMode mode)
         {
-            _stream = new FileStream(filename, FileMode.OpenOrCreate);
+            _stream = File.Open(filename, mode, FileAccess.ReadWrite);
         }
 
         /// <summary>
@@ -25,7 +27,7 @@ namespace Projeto4
         /// <param name="aresta">Aresta a ser escrita</param>
         public void Escrever(Aresta aresta)
         {
-            using (BinaryWriter writer = new BinaryWriter(_stream))
+            using (BinaryWriter writer = new BinaryWriter(_stream, Encoding.Default, true))
             {
                 writer.Write(aresta.IndiceOrigem);
                 writer.Write(aresta.IndiceDestino);
@@ -42,7 +44,7 @@ namespace Projeto4
             if (_stream.Position == _stream.Length)
                 return null;
 
-            using (BinaryReader reader = new BinaryReader(_stream))
+            using (BinaryReader reader = new BinaryReader(_stream, Encoding.Default, true))
                 return new Aresta(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32());
         }
 
