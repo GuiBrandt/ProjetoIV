@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace Projeto4
@@ -137,6 +138,7 @@ namespace Projeto4
                 TextRenderer.DrawText(g, vertices[i].ToString(), Font, Point.Round(pos), Color.Black, Color.White);
             }
 
+            // Desenha as ligações entre os vértices
             foreach (Aresta<Cidade> aresta in grafo.Arestas)
             {
                 PointF pA = posicoes[vertices.IndexOf(aresta.Origem)],
@@ -156,7 +158,7 @@ namespace Projeto4
                 TextRenderer.DrawText(g, aresta.Valor.ToString(), Font, Point.Round(meio), Color.Black, Color.White);
             }
 
-            // Desenha as ligações entre os vértices
+            // Desenha as o caminho destacado
             foreach (Aresta<Cidade> aresta in caminho)
             {
                 PointF pA = posicoes[vertices.IndexOf(aresta.Origem)],
@@ -247,11 +249,145 @@ namespace Projeto4
         /// <param name="origem">Cidade de origem</param>
         /// <param name="destino">Cidade de destino</param>
         /// <returns>Uma lista das cidades percorridas</returns>
-        private Cidade[] ProcurarCaminhoBacktracking(Cidade origem, Cidade destino)
+        private Stack<Cidade> ProcurarCaminhoBacktracking(Cidade origem, Cidade destino)
         {
-            throw new NotImplementedException();
+            List<Cidade> passouCidade = new List<Cidade>();
+            bool achou = false;
+            bool terminou = false;//não tem mais caminhos para procurar
+            Stack<Cidade> pilhaCidades = new Stack<Cidade>();
+            Cidade cidadeAtual = origem;
+
+            while (!achou && !terminou)
+            {
+                if (new List<Aresta<Cidade>>(grafo.Saidas(cidadeAtual)).Exists((Aresta<Cidade> a) => a.Destino.Equals(destino)))
+                {
+                    achou = true;
+                    pilhaCidades.Push(cidadeAtual);
+                    pilhaCidades.Push(destino);
+                }
+
+                else
+                {
+                    passouCidade.Add(cidadeAtual);
+                    bool achouCidadeNova = false;
+                    foreach (Aresta<Cidade> saidas in grafo.Saidas(cidadeAtual))
+                        if (!passouCidade.Contains(saidas.Destino))
+                        {
+                            pilhaCidades.Push(cidadeAtual);
+                            achouCidadeNova = true;
+                            cidadeAtual = saidas.Destino;
+                            break;
+                        }
+
+                    if (!achouCidadeNova)
+                        if (pilhaCidades.Count == 0)
+                            terminou = true;
+                        else
+                            cidadeAtual = pilhaCidades.Pop();
+                }
+            }
+            return pilhaCidades;
         }
 
+        /// <summary>
+        /// Procura um caminho entre dois nós com dijkstra
+        /// </summary>
+        /// <param name="origem">Índice do nó de origem</param>
+        /// <param name="destino">Índice do nó de destino</param>
+        /// <returns>Uma lista com os índices dos nós no caminho</returns>
+        List<int> Dijkstra(int origem, int destino)
+        {
+            var n = grafo.Vertices.Length;
+
+            var distancias = new int[n];
+            for (int i = 0; i < n; i++)
+            {
+                distancias[i] = int.MaxValue;
+            }
+
+            distancias[origem] = 0;
+
+            var visitado = new bool[n];
+            var anterior = new int?[n];
+
+            while (true)
+            {
+                var minimaDistancia = int.MaxValue;
+                var verticeMinimo = 0;
+                for (int i = 0; i < n; i++)
+                {
+                    if (!visitado[i] && minimaDistancia > distancias[i])
+                    {
+                        minimaDistancia = distancias[i];
+                        verticeMinimo = i;
+                    }
+                }
+
+                if (minimaDistancia == int.MaxValue)
+                {
+                    break;
+                }
+
+                visitado[verticeMinimo] = true;
+
+                for (int i = 0; i < n; i++)
+                {
+                    Aresta<Cidade> a = grafo.ArestaEntre(grafo.Vertices[verticeMinimo], grafo.Vertices[i]);
+                    int v = a == null ? 0 : a.Valor;
+
+                    if (v > 0)
+                    {
+                        var menorParaOMinimo = distancias[verticeMinimo];
+                        var distanciaParaOProximo = v;
+
+                        var total = menorParaOMinimo + distanciaParaOProximo;
+
+                        if (total < distancias[i])
+                        {
+                            distancias[i] = total;
+                            anterior[i] = verticeMinimo;
+                        }
+                    }
+                }
+            }
+
+            if (distancias[destino] == int.MaxValue)
+            {
+                return null;
+            }
+
+            var caminho = new LinkedList<int>();
+            int? atual = destino;
+            while (atual != null)
+            {
+                caminho.AddFirst(atual.Value);
+                atual = anterior[atual.Value];
+            }
+
+            return caminho.ToList();
+        }
+
+        /// <summary>
+        /// Procura um caminho entre duas cidades com dijkstra
+        /// </summary>
+        /// <param name="origem">Cidade de origem</param>
+        /// <param name="destino">Cidade de destino</param>
+        /// <returns>Uma lista das cidades percorridas</returns>
+        private string ProcurarCaminhoDijkstra(Cidade origem, Cidade destino)
+        {
+            List<Cidade> listaVertices = new List<Cidade>(grafo.Vertices);
+            List<int> caminho = Dijkstra(listaVertices.IndexOf(origem), listaVertices.IndexOf(destino));
+
+            if (caminho == null)
+                return null;
+
+            string resultado = "" + grafo.Vertices[caminho[0]];
+
+            for (int i = 1; i < caminho.Count; i++)
+                resultado += "," + grafo.Vertices[caminho[i]];
+
+            return resultado;
+        }
         /// <summary>
         /// Encontrar caminhos
         /// </summary>
@@ -292,13 +428,48 @@ namespace Projeto4
             // Backtracking
             else if (rdBacktracking.Checked)
             {
-                
+                if (cbOrigem.SelectedItem == cbDestino.SelectedItem)
+                {
+                    MessageBox.Show(this, "Selecione um destino diferente", Text, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+                Stack<Cidade> caminhoInvertido = ProcurarCaminhoBacktracking(
+                                                 (Cidade)cbOrigem.SelectedItem,
+                                                 (Cidade)cbDestino.SelectedItem);
+
+                if (caminhoInvertido.Count == 0)
+                    MessageBox.Show(this, "Não há caminhos entre essas cidades", Text, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                else
+                {
+                    Stack<Cidade> caminho = new Stack<Cidade>();
+
+                    while (caminhoInvertido.Count != 0)
+                        caminho.Push(caminhoInvertido.Pop());
+
+                    string StringCaminho = "" + caminho.Pop();
+                    while (caminho.Count != 0)
+                        StringCaminho += "," + caminho.Pop().ToString();
+
+                    lbCaminhos.Items.Add(StringCaminho);
+                }
             }
 
             // Dijkstra
             else if (rdDijkstra.Checked)
             {
+                if (cbOrigem.SelectedItem == cbDestino.SelectedItem)
+                {
+                    MessageBox.Show(this, "Selecione um destino diferente", Text, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    return;
+                }
 
+                string caminho = ProcurarCaminhoDijkstra((Cidade)cbOrigem.SelectedItem, (Cidade)cbDestino.SelectedItem);
+
+                if (caminho == null)
+                    MessageBox.Show(this, "Não há caminhos entre essas cidades", Text, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                else
+                    lbCaminhos.Items.Add(caminho);
             }
         }
 
@@ -307,23 +478,20 @@ namespace Projeto4
         /// </summary>
         private void lbCaminhos_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (rdRecursao.Checked)
+            caminho.Clear();
+
+            if (lbCaminhos.SelectedItem != null)
             {
-                caminho.Clear();
-
-                if (lbCaminhos.SelectedItem != null)
+                string[] c = lbCaminhos.SelectedItem.ToString().Split(',');
+                for (int i = 0; i < c.Length - 1; i++)
                 {
-                    string[] c = lbCaminhos.SelectedItem.ToString().Split(',');
-                    for (int i = 0; i < c.Length - 1; i++)
-                    {
-                        Cidade c1 = new Cidade(c[i]), c2 = new Cidade(c[i + 1]);
-                        Aresta<Cidade> aresta = grafo.ArestaEntre(c1, c2);
-                        caminho.Add(aresta);
-                    }
+                    Cidade c1 = new Cidade(c[i]), c2 = new Cidade(c[i + 1]);
+                    Aresta<Cidade> aresta = grafo.ArestaEntre(c1, c2);
+                    caminho.Add(aresta);
                 }
-
-                canvasGrafo.Invalidate();
             }
+
+            canvasGrafo.Invalidate();
         }
 
         /// <summary>
